@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stream Chat Premium</title>
+    <title>CINE CHAT</title>
     <style>
         body { 
     font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; 
@@ -71,9 +71,6 @@
         <button class="channel-btn" onclick="cambiarVideo(1)">😱 CINE TERROR</button>
         <button class="channel-btn" onclick="cambiarVideo(2)">🗿 CLASSIC</button>
         <button class="channel-btn" onclick="cambiarVideo(3)">🧋 BUM Tv</button>
-        <button class="channel-btn" onclick="cambiarVideo(4)">🏧 AUTÉNTICA Tv</button>
-        <button class="channel-btn" onclick="cambiarVideo(5)">🎺 ACTIVA Tv</button>
-        <button class="channel-btn" onclick="cambiarVideo(6)">🎙️ STUDIO DELTA</button>
     </div>
 
     <div id="chat-box">
@@ -90,12 +87,9 @@
             "https://imagenuniversaltv.net:3771/live/iutvlive.m3u8",
             "https://is.gd/GyYDz0",
             "https://is.gd/7CaWXu", 
-            "https://movil.ejeserver.com/live/visiondorada.m3u8", 
-            "https://live.obslivestream.com/autenticatvmux/index.m3u8",
-            "https://streamtv.mediasector.es/hls/activatv/index.m3u8", 
-            "https://5ce9406b73c33.streamlock.net/RSD/ngrp:livestream_all/playlist.m3u8"
+            "https://movil.ejeserver.com/live/visiondorada.m3u8"
         ];
-        const nombresCanales = ["UNIVERSAL Tv", "CINE TERROR", "CLASSIC", "BUM Tv", "AUTÉNTICA Tv", "ACTIVA Tv", "STUDIO DELTA"];
+        const nombresCanales = ["UNIVERSAL Tv", "CINE TERROR", "CLASSIC", "BUM Tv"];
         let videoActualIdx = -1;
 
         // --- CONFIGURACIÓN DE SCROLL POR TIEMPO ---
