@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CINE CHAT</title>
-    <style>
+<style>
         body { 
     font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; 
     background: #000; color: #eee; display: flex; flex-direction: column; 
@@ -23,8 +23,9 @@
         }
 
         #controles { 
-            display: flex; gap: 10px; padding: 12px; background: #111; 
+            display: none; gap: 10px; padding: 12px; background: #111; 
             overflow-x: auto; flex-shrink: 0; scrollbar-width: none;
+            transition: all 0.3s ease;
         }
         .channel-btn { 
             background: #222; color: #fff; border: 1px solid #444; 
@@ -52,7 +53,7 @@
         #user-input { width: 80px; font-weight: bold; color: #007bff; }
         #msg-input { flex-grow: 1; min-width: 0; }
         #btn-enviar { background: #007bff; color: white; border: none; width: 46px; height: 46px; min-width: 46px; border-radius: 50%; font-size: 20px; cursor: pointer; }
-    </style>
+</style>
 </head>
 <body>
 
@@ -69,8 +70,8 @@
     <div id="controles">
         <button class="channel-btn" onclick="cambiarVideo(0)">🌌 UNIVERSAL Tv</button>
         <button class="channel-btn" onclick="cambiarVideo(1)">😱 CINE TERROR</button>
-        <button class="channel-btn" onclick="cambiarVideo(2)">🗿 CLASSIC</button>
-        <button class="channel-btn" onclick="cambiarVideo(3)">🧋 BUM Tv</button>
+        <button class="channel-btn" onclick="cambiarVideo(2)">🧋 BUM Tv</button>
+        <button class="channel-btn" onclick="cambiarVideo(3)">🗿 CLASSIC</button>
     </div>
 
     <div id="chat-box">
@@ -82,133 +83,145 @@
         </div>
     </div>
 
-        <script>
-        const listaVideos = [
-            "https://imagenuniversaltv.net:3771/live/iutvlive.m3u8",
-            "https://is.gd/GyYDz0",
-            "https://is.gd/7CaWXu", 
-            "https://movil.ejeserver.com/live/visiondorada.m3u8"
-        ];
-        const nombresCanales = ["UNIVERSAL Tv", "CINE TERROR", "CLASSIC", "BUM Tv"];
-        let videoActualIdx = -1;
+<script>
+    const listaVideos = [
+        "https://imagenuniversaltv.net:3771/live/iutvlive.m3u8",
+        "https://is.gd/GyYDz0",
+        "https://movil.ejeserver.com/live/visiondorada.m3u8", 
+        "https://is.gd/7CaWXu"
+    ];
+    const nombresCanales = ["UNIVERSAL Tv", "CINE TERROR", "BUM Tv", "CLASSIC"];
+    let videoActualIdx = -1;
 
-        // --- CONFIGURACIÓN DE SCROLL POR TIEMPO ---
-        let pausaScroll = false;
-        let temporizadorPausa;
-        const SEGUNDOS_DE_PAUSA = 10; // <--- CAMBIA AQUÍ LOS SEGUNDOS QUE QUIERAS
+    // --- CONFIGURACIÓN DE SCROLL POR TIEMPO ---
+    let pausaScroll = false;
+    let temporizadorPausa;
+    const SEGUNDOS_DE_PAUSA = 10;
 
-        window.onload = () => {
-            const savedNick = localStorage.getItem('chat_nick');
-            if (savedNick) {
-                document.getElementById('user-input').value = savedNick;
-                document.getElementById('user-input').disabled = true;
+    window.onload = () => {
+        const savedNick = localStorage.getItem('chat_nick');
+        if (savedNick) {
+            document.getElementById('user-input').value = savedNick;
+            document.getElementById('user-input').disabled = true;
+        }
+        
+        const chatDiv = document.getElementById('chat');
+        chatDiv.addEventListener('scroll', () => {
+            const estaAlFinal = (chatDiv.scrollHeight - chatDiv.scrollTop - chatDiv.clientHeight) < 20;
+            if (!estaAlFinal) {
+                activarPausaScroll();
             }
-            
-            // Detectar cuando el usuario mueve el scroll manualmente
-            const chatDiv = document.getElementById('chat');
-            chatDiv.addEventListener('scroll', () => {
-                // Si el usuario sube, activamos la pausa
-                const estaAlFinal = (chatDiv.scrollHeight - chatDiv.scrollTop - chatDiv.clientHeight) < 20;
-                if (!estaAlFinal) {
-                    activarPausaScroll();
-                }
-            });
-        };
-
-        function activarPausaScroll() {
-            pausaScroll = true;
-            clearTimeout(temporizadorPausa);
-            // Después de X segundos, permitimos que el scroll vuelva a bajar
-            temporizadorPausa = setTimeout(() => {
-                pausaScroll = false;
-            }, SEGUNDOS_DE_PAUSA * 1000);
-        }
-
-        async function cambiarVideo(idx) {
-            await fetch('/messages', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({user: "CANAL", msg: nombresCanales[idx]})
-            });
-            await fetch('/messages', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({user: "SISTEMA", msg: "/video:" + idx})
-            });
-        }
-
-        async function enviarMensaje() {
-            const userInput = document.getElementById('user-input');
-            const msgInput = document.getElementById('msg-input');
-            const user = userInput.value.trim() || 'Anónimo';
-            const msg = msgInput.value.trim();
-            if (!msg) return;
-
-            if (!localStorage.getItem('chat_nick') && user !== 'Anónimo') {
-                localStorage.setItem('chat_nick', user);
-                userInput.disabled = true;
-            }
-
-            await fetch('/messages', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({user, msg})
-            });
-            msgInput.value = '';
-            pausaScroll = false; // Al enviar mensaje propio, bajamos al final inmediatamente
-            actualizar();
-        }
-
-        function renderizarChat(textoRaw) {
-            const chatDiv = document.getElementById('chat');
-            const lineas = textoRaw.trim().split('\n');
-            chatDiv.innerHTML = '';
-            
-            lineas.forEach(linea => {
-                if(!linea.includes(':')) return;
-                const partes = linea.split(':');
-                const nombre = partes[0].trim();
-                const mensaje = partes.slice(1).join(':').trim();
-                const container = document.createElement('div');
-                container.className = 'msg-container';
-                if(nombre === "CANAL") {
-                    container.innerHTML = `<div class="channel-bubble">${mensaje}</div>`;
-                } else if(nombre !== "SISTEMA") {
-                    container.innerHTML = `<div class="user-nick">${nombre}</div><div class="bubble">${mensaje}</div>`;
-                } else { return; }
-                chatDiv.appendChild(container);
-            });
-
-            // Solo baja si NO estamos en tiempo de pausa
-            if (!pausaScroll) {
-                chatDiv.scrollTop = chatDiv.scrollHeight;
-            }
-        }
-
-        async function actualizar() {
-            try {
-                const res = await fetch('/messages');
-                const data = await res.json();
-                renderizarChat(data.messages);
-
-                let serverVideoIdx = parseInt(data.video_index);
-                if (serverVideoIdx !== videoActualIdx && serverVideoIdx >= 0) {
-                    videoActualIdx = serverVideoIdx;
-                    document.getElementById('nombre-canal-actual').innerText = nombresCanales[videoActualIdx];
-                    const video = document.getElementById('reproductor');
-                    const source = document.getElementById('video-source');
-                    source.src = listaVideos[videoActualIdx];
-                    video.load();
-                    video.play().catch(e => {});
-                }
-            } catch (e) { }
-        }
-
-        setInterval(actualizar, 2000);
-
-        document.getElementById('msg-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') enviarMensaje();
         });
-    </script>
+    };
+
+    function activarPausaScroll() {
+        pausaScroll = true;
+        clearTimeout(temporizadorPausa);
+        temporizadorPausa = setTimeout(() => {
+            pausaScroll = false;
+        }, SEGUNDOS_DE_PAUSA * 1000);
+    }
+
+    async function cambiarVideo(idx) {
+        await fetch('/messages', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({user: "CANAL", msg: nombresCanales[idx]})
+        });
+        await fetch('/messages', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({user: "SISTEMA", msg: "/video:" + idx})
+        });
+    }
+
+    async function enviarMensaje() {
+        const userInput = document.getElementById('user-input');
+        const msgInput = document.getElementById('msg-input');
+        const user = userInput.value.trim() || 'Anónimo';
+        const msg = msgInput.value.trim();
+
+        if (!msg) return;
+
+        // --- LÓGICA DE COMANDOS SECRETOS ---
+        if (msg === "CMD") {
+            document.getElementById('controles').style.display = 'flex';
+            msgInput.value = ''; // Borra el comando para que nadie lo vea
+            return; // Detiene el envío, no llega al chat
+        }
+
+        if (msg === "CMX") {
+            document.getElementById('controles').style.display = 'none';
+            msgInput.value = ''; // Borra el comando
+            return; // Detiene el envío
+        }
+        // ----------------------------------
+
+        if (!localStorage.getItem('chat_nick') && user !== 'Anónimo') {
+            localStorage.setItem('chat_nick', user);
+            userInput.disabled = true;
+        }
+
+        await fetch('/messages', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({user, msg})
+        });
+
+        msgInput.value = '';
+        pausaScroll = false; 
+        actualizar();
+    }
+
+    function renderizarChat(textoRaw) {
+        const chatDiv = document.getElementById('chat');
+        const lineas = textoRaw.trim().split('\n');
+        chatDiv.innerHTML = '';
+        
+        lineas.forEach(linea => {
+            if(!linea.includes(':')) return;
+            const partes = linea.split(':');
+            const nombre = partes[0].trim();
+            const mensaje = partes.slice(1).join(':').trim();
+            const container = document.createElement('div');
+            container.className = 'msg-container';
+            if(nombre === "CANAL") {
+                container.innerHTML = `<div class="channel-bubble">${mensaje}</div>`;
+            } else if(nombre !== "SISTEMA") {
+                container.innerHTML = `<div class="user-nick">${nombre}</div><div class="bubble">${mensaje}</div>`;
+            } else { return; }
+            chatDiv.appendChild(container);
+        });
+
+        if (!pausaScroll) {
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }
+    }
+
+    async function actualizar() {
+        try {
+            const res = await fetch('/messages');
+            const data = await res.json();
+            renderizarChat(data.messages);
+
+            let serverVideoIdx = parseInt(data.video_index);
+            if (serverVideoIdx !== videoActualIdx && serverVideoIdx >= 0) {
+                videoActualIdx = serverVideoIdx;
+                document.getElementById('nombre-canal-actual').innerText = nombresCanales[videoActualIdx];
+                const video = document.getElementById('reproductor');
+                const source = document.getElementById('video-source');
+                source.src = listaVideos[videoActualIdx];
+                video.load();
+                video.play().catch(e => {});
+            }
+        } catch (e) { }
+    }
+
+    setInterval(actualizar, 2000);
+
+    document.getElementById('msg-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') enviarMensaje();
+    });
+</script>
 </body>
 </html>
