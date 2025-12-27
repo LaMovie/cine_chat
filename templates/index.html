@@ -6,11 +6,12 @@
     <title>Stream Chat Premium</title>
     <style>
         body { 
-            font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; 
-            background: #000; color: #eee; display: flex; flex-direction: column; 
-            height: 100vh; overflow: hidden; 
-        }
-
+    font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; 
+    background: #000; color: #eee; display: flex; flex-direction: column; 
+    /* Cambiamos esto para que use el alto real disponible */
+    height: 100dvh; 
+    overflow: hidden; 
+}
         #video-container { width: 100%; background: #000; border-bottom: 2px solid #222; flex-shrink: 0; }
         video { width: 100%; display: block; aspect-ratio: 16/9; }
 
@@ -31,7 +32,14 @@
             white-space: nowrap; font-size: 13px; font-weight: bold; height: 40px;
         }
 
-        #chat-box { flex-grow: 1; display: flex; flex-direction: column; background: #0a0a0a; overflow: hidden; }
+        #chat-box { 
+    flex-grow: 1; 
+    display: flex; 
+    flex-direction: column; 
+    background: #0a0a0a; 
+    overflow: hidden;
+    min-height: 0; /* Esto es clave */
+}
         #chat { flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 12px; }
 
         .msg-container { display: flex; flex-direction: column; max-width: 85%; }
