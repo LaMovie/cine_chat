@@ -1,11 +1,30 @@
 from flask import Flask, request, jsonify, render_template
 import os
+from git import Repo
 
 app = Flask(__name__, template_folder='templates')
+
+# --- CONFIGURACIÓN DE GITHUB ---
+GITHUB_REPO_URL = "https://github.com/TU_USUARIO/TU_REPO.git" # <--- CAMBIA ESTO
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
+REPO_DIR = os.getcwd()
+
+def sync_to_github():
+    try:
+        remote_url = GITHUB_REPO_URL.replace("https://", f"https://{GITHUB_TOKEN}@")
+        repo = Repo(REPO_DIR)
+        repo.index.add(["chat.txt", "video_actual.txt", "controles_estado.txt"])
+        repo.index.commit("Update chat/video/controls state")
+        origin = repo.remote(name='origin')
+        origin.set_url(remote_url)
+        origin.push()
+    except Exception as e:
+        print(f"Error al sincronizar: {e}")
 
 # Archivos de datos
 CHAT_FILE = "chat.txt"
 VIDEO_FILE = "video_actual.txt"
+CONTROLES_FILE = "controles_estado.txt"
 
 def write_file(filename, content):
     with open(filename, "w") as f:
@@ -19,7 +38,6 @@ def read_file(filename, default="0"):
 
 @app.route('/')
 def index():
-    # Flask buscará index.html dentro de la carpeta /templates
     return render_template("index.html")
 
 @app.route('/messages', methods=['GET', 'POST'])
@@ -27,12 +45,26 @@ def messages():
     if request.method == 'POST':
         user = request.json.get('user', 'Anónimo')
         msg = request.json.get('msg', '')
+        
+        # Comandos globales de administración
+        if msg == "CMD":
+            write_file(CONTROLES_FILE, "flex")
+            sync_to_github()
+            return jsonify({"status": "ok", "hide": True}) # hide: True para que no se escriba en el chat
+        
+        if msg == "CMX":
+            write_file(CONTROLES_FILE, "none")
+            sync_to_github()
+            return jsonify({"status": "ok", "hide": True})
+
         if msg.startswith("/video:"):
             video_index = msg.split(":")[1]
             write_file(VIDEO_FILE, video_index)
         
         with open(CHAT_FILE, "a") as f:
             f.write(f"{user}: {msg}\n")
+        
+        sync_to_github()
         return jsonify({"status": "ok"})
     
     msgs = ""
@@ -41,10 +73,16 @@ def messages():
             msgs = f.read()
             
     current_video = read_file(VIDEO_FILE)
-    return jsonify({"messages": msgs, "video_index": current_video})
+    # Leemos el estado de los controles (none o flex)
+    controles_visibilidad = read_file(CONTROLES_FILE, "none")
+    
+    return jsonify({
+        "messages": msgs, 
+        "video_index": current_video,
+        "controles": controles_visibilidad
+    })
 
 if __name__ == '__main__':
-    # Ajuste vital para Render
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
     
