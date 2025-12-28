@@ -59,9 +59,7 @@ def messages():
         user = request.json.get('user', 'Anónimo')
         msg = request.json.get('msg', '')
         
-        # --- COMANDOS DE ADMINISTRACIÓN ---
         if msg == "CLR":
-            # Borra el contenido del chat y deja una notificación del sistema
             write_file(CHAT_FILE, "SISTEMA: Chat reiniciado\n")
             sync_to_github()
             return jsonify({"status": "ok", "hide": True})
@@ -82,14 +80,12 @@ def messages():
             sync_to_github()
             return jsonify({"status": "ok"})
         
-        # --- MENSAJES NORMALES ---
         with open(CHAT_FILE, "a") as f:
             f.write(f"{user}: {msg}\n")
         
         sync_to_github()
         return jsonify({"status": "ok"})
     
-    # Respuesta GET
     msgs = ""
     if os.path.exists(CHAT_FILE):
         with open(CHAT_FILE, "r") as f:
@@ -103,11 +99,11 @@ def messages():
         "video_index": current_video,
         "controles": controles_visibilidad
     })
-        
-    @app.route('/keep-alive')
+
+@app.route('/keep-alive')
 def keep_alive():
     return "Servidor Activo", 200
-    
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
