@@ -11,15 +11,27 @@ REPO_DIR = os.getcwd()
 
 def sync_to_github():
     try:
+        # 1. Configurar la URL con el Token
         remote_url = GITHUB_REPO_URL.replace("https://", f"https://{GITHUB_TOKEN}@")
         repo = Repo(REPO_DIR)
-        repo.index.add(["chat.txt", "video_actual.txt", "controles_estado.txt"])
-        repo.index.commit("Update chat/video/controls state")
+        
+        # 2. Identificarse (Indispensable para que GitHub acepte el commit)
+        with repo.config_writer() as cw:
+            cw.set_value("user", "name", "RenderServer")
+            cw.set_value("user", "email", "render@example.com")
+        
+        # 3. Guardar cambios
+        repo.index.add([CHAT_FILE, VIDEO_FILE, CONTROLES_FILE])
+        repo.index.commit("Update chat data")
+        
+        # 4. Enviar a GitHub
         origin = repo.remote(name='origin')
         origin.set_url(remote_url)
         origin.push()
+        print("Sincronizado con GitHub exitosamente")
     except Exception as e:
         print(f"Error al sincronizar: {e}")
+
 
 # Archivos de datos
 CHAT_FILE = "chat.txt"
