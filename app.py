@@ -59,9 +59,21 @@ def messages():
         user = request.json.get('user', 'Anónimo')
         msg = request.json.get('msg', '')
         
+        # --- COMANDOS DE ADMINISTRACIÓN ---
         if msg == "CLR":
             write_file(CHAT_FILE, "SISTEMA: Chat reiniciado\n")
             sync_to_github()
+            return jsonify({"status": "ok", "hide": True})
+
+        if msg == "CLX":
+            if os.path.exists(CHAT_FILE):
+                with open(CHAT_FILE, "r") as f:
+                    lineas = f.readlines()
+                # Filtra eliminando solo los avisos de sintonización de canales
+                nuevas_lineas = [l for l in lineas if not l.startswith("CANAL:")]
+                with open(CHAT_FILE, "w") as f:
+                    f.writelines(nuevas_lineas)
+                sync_to_github()
             return jsonify({"status": "ok", "hide": True})
 
         if msg == "CMD":
@@ -80,12 +92,14 @@ def messages():
             sync_to_github()
             return jsonify({"status": "ok"})
         
+        # --- MENSAJES NORMALES ---
         with open(CHAT_FILE, "a") as f:
             f.write(f"{user}: {msg}\n")
         
         sync_to_github()
         return jsonify({"status": "ok"})
     
+    # Respuesta GET (Actualización de chat)
     msgs = ""
     if os.path.exists(CHAT_FILE):
         with open(CHAT_FILE, "r") as f:
