@@ -5,3 +5,4 @@ SISTEMA: Chat reiniciado
 🧟 NICO: Me suena pero no acabo de recordar su nombre
 CANAL: CINE TERROR
 CANAL: BUM Tv
+CANAL: CLASSIC
